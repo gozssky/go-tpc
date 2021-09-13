@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -21,7 +22,9 @@ var tpccConfig tpcc.Config
 func executeTpcc(action string) {
 	if pprofAddr != "" {
 		go func() {
-			http.ListenAndServe(pprofAddr, http.DefaultServeMux)
+			if err := http.ListenAndServe(pprofAddr, http.DefaultServeMux); err != nil {
+				log.Fatalf("Failed to listen pprofAddr: %v", err)
+			}
 		}()
 	}
 	if metricsAddr != "" {
@@ -30,7 +33,9 @@ func executeTpcc(action string) {
 				Addr:    metricsAddr,
 				Handler: promhttp.Handler(),
 			}
-			s.ListenAndServe()
+			if err := s.ListenAndServe(); err != nil {
+				log.Fatalf("Failed to listen metricsAddr: %v", err)
+			}
 		}()
 	}
 	runtime.GOMAXPROCS(maxProcs)
